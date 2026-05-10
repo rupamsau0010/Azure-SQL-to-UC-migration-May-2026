@@ -1,0 +1,13 @@
+
+# Secrets — NEVER commit these
+*.env
+.databricks/
+secrets.json
+*connection_string*
+
+# Local notebook checkpoints
+.ipynb_checkpoints/
+
+# Azure deployment state
+.terraform/
+*.tfstate
