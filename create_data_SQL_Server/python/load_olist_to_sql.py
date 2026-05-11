@@ -412,14 +412,14 @@ def main():
     # Then transactional tables
     results = {}
     loaders = [
-        # ("customers",            load_customers),
-        # ("sellers",              load_sellers),
-        # ("products",             load_products),
-        # ("category_translation", load_category_translation),
-        # ("geolocation",          load_geolocation),    # largest — load last of dims
-        # ("orders",               load_orders),
-        # ("order_items",          load_order_items),
-        # ("order_payments",       load_order_payments),
+        ("customers",            load_customers),
+        ("sellers",              load_sellers),
+        ("products",             load_products),
+        ("category_translation", load_category_translation),
+        ("geolocation",          load_geolocation),    # largest — load last of dims
+        ("orders",               load_orders),
+        ("order_items",          load_order_items),
+        ("order_payments",       load_order_payments),
         ("order_reviews",        load_order_reviews),  # PROB-03 injected here
     ]
 
