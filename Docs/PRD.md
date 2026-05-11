@@ -110,11 +110,11 @@ This project migrates Olist e-commerce transactional data from Azure SQL PaaS in
 | FR-03 | ADF Copy Activity uses parameterized Lookup + ForEach to support all tables from single pipeline | Must Have |
 | FR-04 | Bronze files land as Parquet on ADLS partitioned by `ingestion_date=YYYY-MM-DD` | Must Have |
 | FR-05 | ADF Stored Procedure activity updates watermark after successful copy | Must Have |
-| FR-06 | Databricks Bronze→Silver notebook: enforce schema, cast types, handle nulls, deduplicate | Must Have |
+| FR-06 | Databricks Bronze → Silver notebook: enforce schema, cast types, handle nulls, deduplicate | Must Have |
 | FR-07 | 14 DQ rules applied at Silver layer (see Section 8) | Must Have |
 | FR-08 | Records failing DQ written to `quarantine` schema with `dq_fail_reason` column | Must Have |
 | FR-09 | Silver tables written as Delta with MERGE (upsert) pattern — ensures idempotency | Must Have |
-| FR-10 | Databricks Silver→Gold notebook: build star schema + 3 aggregation tables | Must Have |
+| FR-10 | Databricks Silver → Gold notebook: build star schema + 3 aggregation tables | Must Have |
 | FR-11 | All secrets (SQL conn string, ADLS key, SP secret) stored in Azure Key Vault | Must Have |
 | FR-12 | Databricks accesses Key Vault via KV-backed secret scope (Managed Identity) | Must Have |
 | FR-13 | ADF accesses Key Vault via ADF Managed Identity | Must Have |

@@ -53,7 +53,7 @@
 │                         STORAGE LAYER — ADLS Gen2                            │
 │                  (Hierarchical Namespace Enabled)                            │
 │                                                                              │
-│   Storage Account: migrationadls<suffix>                                     │
+│   Storage Account: migrationadlsuc                                           │
 │                                                                              │
 │   ┌───────────────────────────────────────────────────────────────────────┐  │
 │   │  Container: migration-raw  (Bronze)                                   │  │
