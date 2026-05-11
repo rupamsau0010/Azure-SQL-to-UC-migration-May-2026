@@ -1,0 +1,15 @@
+{
+	"name": "migration-adf-uc",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Enabled",
+			"editable": true
+		}
+	},
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "a084eb86-ce78-4ff9-a839-8bf12dad5f01",
+		"tenantId": "10c1ca51-3400-4604-98c4-9639c31fc2b4"
+	}
+}
