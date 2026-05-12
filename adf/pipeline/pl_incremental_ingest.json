@@ -273,8 +273,11 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"variableName": "pipelineReturnValue",
-								"setSystemVariable": true
+								"variableName": "v_error_message",
+								"value": {
+									"value": "@concat(\n     'Copy failed for table: ',\n     item().table_name,\n     ' | Run ID: ',\n     pipeline().RunId\n   )",
+									"type": "Expression"
+								}
 							}
 						}
 					]
@@ -322,6 +325,11 @@
 						"watermark_col": null
 					}
 				]
+			}
+		},
+		"variables": {
+			"v_error_message": {
+				"type": "String"
 			}
 		},
 		"annotations": []
