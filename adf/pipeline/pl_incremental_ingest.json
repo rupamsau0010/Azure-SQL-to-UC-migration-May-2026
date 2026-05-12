@@ -39,7 +39,16 @@
 								},
 								"dataset": {
 									"referenceName": "ds_sql_source",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"table_name": {
+											"value": "@item().table_name",
+											"type": "Expression"
+										},
+										"watermark_col": "@item().watermark_col",
+										"old_watermark": "1900-01-01 00:00:00",
+										"new_watermark": "1900-01-01 00:00:00"
+									}
 								}
 							}
 						},
@@ -74,7 +83,13 @@
 								},
 								"dataset": {
 									"referenceName": "ds_sql_source",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"table_name": "@item().table_name",
+										"watermark_col": "@item().watermark_col",
+										"old_watermark": "1900-01-01 00:00:00",
+										"new_watermark": "1900-01-01 00:00:00"
+									}
 								}
 							}
 						},
@@ -256,7 +271,11 @@
 								"secureOutput": false,
 								"secureInput": false
 							},
-							"userProperties": []
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "pipelineReturnValue",
+								"setSystemVariable": true
+							}
 						}
 					]
 				}
