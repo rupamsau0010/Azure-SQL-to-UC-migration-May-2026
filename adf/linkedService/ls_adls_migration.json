@@ -1,0 +1,11 @@
+{
+	"name": "ls_adls_migration",
+	"properties": {
+		"description": "Bronze landing zone — ADLS Gen2",
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://migrationadlsuc.dfs.core.windows.net/"
+		}
+	}
+}
