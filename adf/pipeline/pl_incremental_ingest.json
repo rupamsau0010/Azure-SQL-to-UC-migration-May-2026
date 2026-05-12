@@ -107,7 +107,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"expression": {
-									"value": "@not(equals(\n  activity('act_get_old_watermark').output.firstRow.last_watermark,\n  activity('act_get_new_watermark').output.firstRow.new_watermark\n))",
+									"value": "@not(equals(\n  formatDateTime(activity('act_get_old_watermark').output.firstRow.last_watermark, 'yyyy-MM-dd HH:mm:ss'),\n  formatDateTime(activity('act_get_new_watermark').output.firstRow.new_watermark, 'yyyy-MM-dd HH:mm:ss')\n))",
 									"type": "Expression"
 								},
 								"ifTrueActivities": [
