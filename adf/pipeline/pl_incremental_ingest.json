@@ -94,8 +94,8 @@
 							}
 						},
 						{
-							"name": "act_copy_to_bronze",
-							"type": "Copy",
+							"name": "act_check_new_data_avilability_copy1",
+							"type": "IfCondition",
 							"dependsOn": [
 								{
 									"activity": "act_get_new_watermark",
@@ -104,183 +104,197 @@
 									]
 								}
 							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
 							"userProperties": [],
 							"typeProperties": {
-								"source": {
-									"type": "AzureSqlSource",
-									"additionalColumns": [
-										{
-											"name": "ingestion_date",
-											"value": {
-												"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')",
-												"type": "Expression"
-											}
-										},
-										{
-											"name": "pipeline_run_id",
-											"value": {
-												"value": "@pipeline().RunId",
-												"type": "Expression"
-											}
-										}
-									],
-									"sqlReaderQuery": {
-										"value": "@if(\n  equals(item().watermark_col, null),\n  concat('SELECT * FROM dbo.[', item().table_name, ']'),\n  concat(\n    'SELECT * FROM dbo.[', item().table_name,\n    '] WHERE [', item().watermark_col,\n    '] > ''', activity('act_get_old_watermark').output.firstRow.last_watermark,\n    ''' AND [', item().watermark_col,\n    '] <= ''', activity('act_get_new_watermark').output.firstRow.new_watermark,\n    ''''\n  )\n)",
-										"type": "Expression"
-									},
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
-								"sink": {
-									"type": "ParquetSink",
-									"storeSettings": {
-										"type": "AzureBlobFSWriteSettings"
-									},
-									"formatSettings": {
-										"type": "ParquetWriteSettings"
-									}
-								},
-								"enableStaging": false,
-								"logSettings": {
-									"enableCopyActivityLog": true,
-									"copyActivityLogSettings": {
-										"logLevel": "Warning",
-										"enableReliableLogging": false
-									},
-									"logLocationSettings": {
-										"linkedServiceName": {
-											"referenceName": "ls_adls_migration",
-											"type": "LinkedServiceReference"
-										},
-										"path": "migration-raw/adf-logs/"
-									}
-								},
-								"translator": {
-									"type": "TabularTranslator",
-									"typeConversion": true,
-									"typeConversionSettings": {
-										"allowDataTruncation": true,
-										"treatBooleanAsNumber": false
-									}
-								}
-							},
-							"inputs": [
-								{
-									"referenceName": "ds_sql_source",
-									"type": "DatasetReference",
-									"parameters": {
-										"table_name": {
-											"value": "@item().table_name",
-											"type": "Expression"
-										},
-										"watermark_col": "@item().watermark_col",
-										"old_watermark": {
-											"value": "@activity('act_get_old_watermark').output.firstRow.last_watermark",
-											"type": "Expression"
-										},
-										"new_watermark": {
-											"value": "@activity('act_get_new_watermark').output.firstRow.new_watermark",
-											"type": "Expression"
-										}
-									}
-								}
-							],
-							"outputs": [
-								{
-									"referenceName": "ds_adls_bronze_parquet",
-									"type": "DatasetReference",
-									"parameters": {
-										"table_name": {
-											"value": "@item().sink_folder",
-											"type": "Expression"
-										},
-										"ingestion_date": {
-											"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss')",
-											"type": "Expression"
-										}
-									}
-								}
-							]
-						},
-						{
-							"name": "act_update_watermark",
-							"type": "SqlServerStoredProcedure",
-							"dependsOn": [
-								{
-									"activity": "act_copy_to_bronze",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_update_watermark]",
-								"storedProcedureParameters": {
-									"new_watermark": {
-										"value": {
-											"value": "@activity('act_get_new_watermark').output.firstRow.new_watermark",
-											"type": "Expression"
-										},
-										"type": "DateTime"
-									},
-									"row_count": {
-										"value": {
-											"value": "@activity('act_copy_to_bronze').output.rowsCopied",
-											"type": "Expression"
-										},
-										"type": "Int64"
-									},
-									"table_name": {
-										"value": {
-											"value": "@item().sink_folder",
-											"type": "Expression"
-										},
-										"type": "String"
-									}
-								}
-							},
-							"linkedServiceName": {
-								"referenceName": "ls_azure_sql_migration",
-								"type": "LinkedServiceReference"
-							}
-						},
-						{
-							"name": "act_log_copy_failure",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "act_copy_to_bronze",
-									"dependencyConditions": [
-										"Failed"
-									]
-								}
-							],
-							"policy": {
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "v_error_message",
-								"value": {
-									"value": "@concat(\n     'Copy failed for table: ',\n     item().table_name,\n     ' | Run ID: ',\n     pipeline().RunId\n   )",
+								"expression": {
+									"value": "@not(equals(\n  activity('act_get_old_watermark').output.firstRow.last_watermark,\n  activity('act_get_new_watermark').output.firstRow.new_watermark\n))",
 									"type": "Expression"
-								}
+								},
+								"ifTrueActivities": [
+									{
+										"name": "act_copy_to_bronze_copy2",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"additionalColumns": [
+													{
+														"name": "ingestion_date",
+														"value": {
+															"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "pipeline_run_id",
+														"value": {
+															"value": "@pipeline().RunId",
+															"type": "Expression"
+														}
+													}
+												],
+												"sqlReaderQuery": {
+													"value": "@if(\n  equals(item().watermark_col, null),\n  concat('SELECT * FROM dbo.[', item().table_name, ']'),\n  concat(\n    'SELECT * FROM dbo.[', item().table_name,\n    '] WHERE [', item().watermark_col,\n    '] > ''', activity('act_get_old_watermark').output.firstRow.last_watermark,\n    ''' AND [', item().watermark_col,\n    '] <= ''', activity('act_get_new_watermark').output.firstRow.new_watermark,\n    ''''\n  )\n)",
+													"type": "Expression"
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"logSettings": {
+												"enableCopyActivityLog": true,
+												"copyActivityLogSettings": {
+													"logLevel": "Warning",
+													"enableReliableLogging": false
+												},
+												"logLocationSettings": {
+													"linkedServiceName": {
+														"referenceName": "ls_adls_migration",
+														"type": "LinkedServiceReference"
+													},
+													"path": "migration-raw/adf-logs/"
+												}
+											},
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "ds_sql_source",
+												"type": "DatasetReference",
+												"parameters": {
+													"table_name": {
+														"value": "@item().table_name",
+														"type": "Expression"
+													},
+													"watermark_col": "@item().watermark_col",
+													"old_watermark": {
+														"value": "@activity('act_get_old_watermark').output.firstRow.last_watermark",
+														"type": "Expression"
+													},
+													"new_watermark": {
+														"value": "@activity('act_get_new_watermark').output.firstRow.new_watermark",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "ds_adls_bronze_parquet",
+												"type": "DatasetReference",
+												"parameters": {
+													"table_name": {
+														"value": "@item().sink_folder",
+														"type": "Expression"
+													},
+													"ingestion_date": {
+														"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "act_update_watermark_copy2",
+										"type": "SqlServerStoredProcedure",
+										"dependsOn": [
+											{
+												"activity": "act_copy_to_bronze_copy2",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"storedProcedureName": "[dbo].[usp_update_watermark]",
+											"storedProcedureParameters": {
+												"new_watermark": {
+													"value": {
+														"value": "@activity('act_get_new_watermark').output.firstRow.new_watermark",
+														"type": "Expression"
+													},
+													"type": "DateTime"
+												},
+												"row_count": {
+													"value": {
+														"value": "@activity('act_copy_to_bronze').output.rowsCopied",
+														"type": "Expression"
+													},
+													"type": "Int64"
+												},
+												"table_name": {
+													"value": {
+														"value": "@item().sink_folder",
+														"type": "Expression"
+													},
+													"type": "String"
+												}
+											}
+										},
+										"linkedServiceName": {
+											"referenceName": "ls_azure_sql_migration",
+											"type": "LinkedServiceReference"
+										}
+									},
+									{
+										"name": "act_log_copy_failure_copy2",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "act_copy_to_bronze_copy2",
+												"dependencyConditions": [
+													"Failed"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "v_error_message",
+											"value": {
+												"value": "@concat(\n     'Copy failed for table: ',\n     item().table_name,\n     ' | Run ID: ',\n     pipeline().RunId\n   )",
+												"type": "Expression"
+											}
+										}
+									}
+								]
 							}
 						}
 					]
