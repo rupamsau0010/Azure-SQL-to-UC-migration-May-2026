@@ -1,0 +1,59 @@
+{
+	"name": "ds_sql_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_azure_sql_migration",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"table_name": {
+				"type": "string"
+			},
+			"watermark_col": {
+				"type": "string"
+			},
+			"old_watermark": {
+				"type": "string"
+			},
+			"new_watermark": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "customer_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_unique_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_zip_code_prefix",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_city",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_state",
+				"type": "nvarchar"
+			},
+			{
+				"name": "created_at",
+				"type": "datetime2",
+				"scale": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": {
+				"value": "@dataset().table_name",
+				"type": "Expression"
+			}
+		}
+	}
+}
