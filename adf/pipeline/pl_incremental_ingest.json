@@ -201,7 +201,10 @@
 											"value": "@item().sink_folder",
 											"type": "Expression"
 										},
-										"ingestion_date": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+										"ingestion_date": {
+											"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss')",
+											"type": "Expression"
+										}
 									}
 								}
 							]
