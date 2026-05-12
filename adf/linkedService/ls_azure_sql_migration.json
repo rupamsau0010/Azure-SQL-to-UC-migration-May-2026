@@ -1,0 +1,24 @@
+{
+	"name": "ls_azure_sql_migration",
+	"properties": {
+		"description": "Source Azure SQL — Olist data",
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "migration-sql-uc.database.windows.net",
+			"database": "migration-db",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "sqladmin",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_akv_migration",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sql-admin-password"
+			}
+		}
+	}
+}
