@@ -8,6 +8,14 @@
 				"pipelineReference": {
 					"referenceName": "pl_incremental_ingest",
 					"type": "PipelineReference"
+				},
+				"parameters": {
+					"p_tables_config": [
+						{
+							"table_name": "olist_sellers_dataset",
+							"watermark_col": "created_at"
+						}
+					]
 				}
 			}
 		],
