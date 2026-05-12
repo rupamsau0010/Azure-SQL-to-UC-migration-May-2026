@@ -31,7 +31,7 @@
 								"source": {
 									"type": "AzureSqlSource",
 									"sqlReaderQuery": {
-										"value": "@concat(\n    'SELECT last_watermark, watermark_col FROM dbo.watermark_control WHERE table_name = ''',\n    item().table_name,\n    ''''\n  )",
+										"value": "@concat(\n  'SELECT last_watermark, watermark_col FROM dbo.watermark_control WHERE table_name = N''',\n  item().sink_folder,\n  ''''\n)",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00",
@@ -198,7 +198,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"table_name": {
-											"value": "@item().table_name",
+											"value": "@item().sink_folder",
 											"type": "Expression"
 										},
 										"ingestion_date": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
@@ -244,7 +244,7 @@
 									},
 									"table_name": {
 										"value": {
-											"value": "@item().table_name",
+											"value": "@item().sink_folder",
 											"type": "Expression"
 										},
 										"type": "String"
@@ -290,39 +290,48 @@
 				"defaultValue": [
 					{
 						"table_name": "olist_orders_dataset",
-						"watermark_col": "order_purchase_timestamp"
+						"watermark_col": "order_purchase_timestamp",
+						"sink_folder": "olist_orders_dataset"
 					},
 					{
 						"table_name": "olist_order_items_dataset",
-						"watermark_col": "shipping_limit_date"
+						"watermark_col": "shipping_limit_date",
+						"sink_folder": "olist_order_items_dataset"
 					},
 					{
 						"table_name": "vw_order_payments_incremental",
-						"watermark_col": "order_purchase_timestamp"
+						"watermark_col": "order_purchase_timestamp",
+						"sink_folder": "olist_order_payments_dataset"
 					},
 					{
 						"table_name": "olist_order_reviews_dataset",
-						"watermark_col": "review_creation_date"
+						"watermark_col": "review_creation_date",
+						"sink_folder": "olist_order_reviews_dataset"
 					},
 					{
 						"table_name": "olist_customers_dataset",
-						"watermark_col": "created_at"
+						"watermark_col": "created_at",
+						"sink_folder": "olist_customers_dataset"
 					},
 					{
 						"table_name": "olist_products_dataset",
-						"watermark_col": "created_at"
+						"watermark_col": "created_at",
+						"sink_folder": "olist_products_dataset"
 					},
 					{
 						"table_name": "olist_sellers_dataset",
-						"watermark_col": "created_at"
+						"watermark_col": "created_at",
+						"sink_folder": "olist_sellers_dataset"
 					},
 					{
 						"table_name": "olist_geolocation_dataset",
-						"watermark_col": "created_at"
+						"watermark_col": "created_at",
+						"sink_folder": "olist_geolocation_dataset"
 					},
 					{
 						"table_name": "product_category_name_translation",
-						"watermark_col": null
+						"watermark_col": null,
+						"sink_folder": "product_category_name_translation"
 					}
 				]
 			}
