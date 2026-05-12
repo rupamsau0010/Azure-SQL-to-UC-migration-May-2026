@@ -112,7 +112,7 @@
 								},
 								"ifTrueActivities": [
 									{
-										"name": "act_copy_to_bronze_copy2",
+										"name": "act_copy_to_bronze_copy",
 										"type": "Copy",
 										"dependsOn": [],
 										"policy": {
@@ -221,11 +221,11 @@
 										]
 									},
 									{
-										"name": "act_update_watermark_copy2",
+										"name": "act_update_watermark_copy",
 										"type": "SqlServerStoredProcedure",
 										"dependsOn": [
 											{
-												"activity": "act_copy_to_bronze_copy2",
+												"activity": "act_copy_to_bronze_copy",
 												"dependencyConditions": [
 													"Succeeded"
 												]
@@ -271,11 +271,11 @@
 										}
 									},
 									{
-										"name": "act_log_copy_failure_copy2",
+										"name": "act_log_copy_failure_copy",
 										"type": "SetVariable",
 										"dependsOn": [
 											{
-												"activity": "act_copy_to_bronze_copy2",
+												"activity": "act_copy_to_bronze_copy",
 												"dependencyConditions": [
 													"Failed"
 												]
