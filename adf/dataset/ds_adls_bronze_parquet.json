@@ -1,0 +1,35 @@
+{
+	"name": "ds_adls_bronze_parquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_migration",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"table_name": {
+				"type": "string"
+			},
+			"ingestion_date": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().table_name, '_', dataset().ingestion_date, '.parquet')",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(dataset().table_name, '/ingestion_date=', dataset().ingestion_date)",
+					"type": "Expression"
+				},
+				"fileSystem": "migration-raw"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
