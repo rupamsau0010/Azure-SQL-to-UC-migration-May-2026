@@ -297,7 +297,7 @@
 						"watermark_col": "shipping_limit_date"
 					},
 					{
-						"table_name": "olist_order_payments_dataset",
+						"table_name": "vw_order_payments_incremental",
 						"watermark_col": "order_purchase_timestamp"
 					},
 					{
