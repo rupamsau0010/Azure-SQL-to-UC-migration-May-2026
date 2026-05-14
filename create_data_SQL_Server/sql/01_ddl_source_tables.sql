@@ -145,6 +145,25 @@ CREATE TABLE dbo.olist_order_payments_dataset (
 );
 GO
 
+-- =============================================================================
+-- Fix for olist_order_payments_dataset — no native timestamp column
+-- Solution: view that joins payments with orders to expose order_purchase_timestamp
+-- ADF will query this view instead of the raw table
+-- =============================================================================
+
+CREATE OR ALTER VIEW dbo.vw_order_payments_incremental AS
+SELECT
+    p.order_id,
+    p.payment_sequential,
+    p.payment_type,
+    p.payment_installments,
+    p.payment_value,
+    o.order_purchase_timestamp   -- ← borrowed from orders table
+FROM dbo.olist_order_payments_dataset p
+INNER JOIN dbo.olist_orders_dataset o
+    ON p.order_id = o.order_id;
+GO
+
 -- ---------------------------------------------------------------------------
 -- 9. olist_order_reviews_dataset
 -- Note: review_id not unique in raw data (same review_id, different answers)
