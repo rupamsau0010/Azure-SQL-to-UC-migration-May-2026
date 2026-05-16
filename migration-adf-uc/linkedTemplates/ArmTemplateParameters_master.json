@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "migration-adf-uc"
+		},
+		"ls_adls_migration_properties_typeProperties_url": {
+			"value": "https://migrationadlsuc.dfs.core.windows.net/"
+		},
+		"ls_akv_migration_properties_typeProperties_baseUrl": {
+			"value": "https://migration-kv-uc.vault.azure.net/"
+		},
+		"ls_azure_sql_migration_properties_typeProperties_server": {
+			"value": "migration-sql-uc.database.windows.net"
+		},
+		"ls_azure_sql_migration_properties_typeProperties_database": {
+			"value": "migration-db"
+		},
+		"ls_azure_sql_migration_properties_typeProperties_userName": {
+			"value": "sqladmin"
+		},
+		"trigger_daily_02ist_properties_pl_incremental_ingest_parameters_p_tables_config": {
+			"value": [
+				{
+					"table_name": "olist_sellers_dataset",
+					"watermark_col": "created_at"
+				}
+			]
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
