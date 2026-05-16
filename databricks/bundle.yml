@@ -1,9 +1,45 @@
 bundle:
-  name: migration-dbx-project
+  name: sql-to-uc-migration
 
 workspace:
-  host: https://<your-workspace-url>.azuredatabricks.net
+  host: https://adb-7405609981066864.4.azuredatabricks.net/
 
 targets:
   dev:
     mode: development
+
+resources:
+  jobs:
+    job_bronze_to_silver:
+      name: "[DEV] Bronze to Silver"
+      tasks:
+        - task_key: bronze_silver
+          notebook_task:
+            notebook_path: ./databricks/notebooks/bronze_to_silver/01_bronze_to_silver.py
+          new_cluster:
+            spark_version: "17.3.x-scala2.13"
+            node_type_id: Standard_DS3_v2
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: "local[*]"
+            autotermination_minutes: 10
+            data_security_mode: SINGLE_USER
+            policy_id: 000BD5A6F5AED8F3   # get from Compute → Policies → migration-dev-policy → copy ID
+
+    job_silver_to_gold:
+      name: "[DEV] Silver to Gold"
+      tasks:
+        - task_key: silver_gold
+          notebook_task:
+            notebook_path: ./databricks/notebooks/silver_to_gold/02_silver_to_gold.py
+          new_cluster:
+            spark_version: "17.3.x-scala2.13"
+            node_type_id: Standard_DS3_v2
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: "local[*]"
+            autotermination_minutes: 10
+            data_security_mode: SINGLE_USER
+            policy_id: 000BD5A6F5AED8F3
