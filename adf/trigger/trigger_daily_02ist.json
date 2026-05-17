@@ -1,0 +1,32 @@
+{
+	"name": "trigger_daily_02ist",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_incremental_ingest",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"p_tables_config": [
+						{
+							"table_name": "olist_sellers_dataset",
+							"watermark_col": "created_at"
+						}
+					]
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2026-05-13T14:00:00",
+				"timeZone": "India Standard Time"
+			}
+		}
+	}
+}

@@ -1,0 +1,363 @@
+{
+	"name": "pl_incremental_ingest",
+	"properties": {
+		"description": "Watermark-based incremental extraction from Azure SQL to ADLS Bronze",
+		"activities": [
+			{
+				"name": "act_foreach_tables",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.p_tables_config",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "act_get_old_watermark",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": {
+										"value": "@concat(\n  'SELECT last_watermark, watermark_col FROM dbo.watermark_control WHERE table_name = N''',\n  item().sink_folder,\n  ''''\n)",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "ds_sql_source",
+									"type": "DatasetReference",
+									"parameters": {
+										"table_name": {
+											"value": "@item().table_name",
+											"type": "Expression"
+										},
+										"watermark_col": "@item().watermark_col",
+										"old_watermark": "1900-01-01 00:00:00",
+										"new_watermark": "1900-01-01 00:00:00"
+									}
+								}
+							}
+						},
+						{
+							"name": "act_get_new_watermark",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "act_get_old_watermark",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": {
+										"value": "@if(\n  equals(item().watermark_col, null),\n  'SELECT CAST(SYSDATETIME() AS NVARCHAR(50)) AS new_watermark',\n  concat(\n    'SELECT CAST(MAX([',\n    item().watermark_col,\n    ']) AS NVARCHAR(50)) AS new_watermark FROM dbo.[',\n    item().table_name,\n    ']'\n  )\n)",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "ds_sql_source",
+									"type": "DatasetReference",
+									"parameters": {
+										"table_name": "@item().table_name",
+										"watermark_col": "@item().watermark_col",
+										"old_watermark": "1900-01-01 00:00:00",
+										"new_watermark": "1900-01-01 00:00:00"
+									}
+								}
+							}
+						},
+						{
+							"name": "act_check_new_data_avilability_copy1",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "act_get_new_watermark",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@not(equals(\n  formatDateTime(activity('act_get_old_watermark').output.firstRow.last_watermark, 'yyyy-MM-dd HH:mm:ss'),\n  formatDateTime(activity('act_get_new_watermark').output.firstRow.new_watermark, 'yyyy-MM-dd HH:mm:ss')\n))",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "act_copy_to_bronze",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"additionalColumns": [
+													{
+														"name": "ingestion_date",
+														"value": {
+															"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "pipeline_run_id",
+														"value": {
+															"value": "@pipeline().RunId",
+															"type": "Expression"
+														}
+													}
+												],
+												"sqlReaderQuery": {
+													"value": "@if(\n  equals(item().watermark_col, null),\n  concat('SELECT * FROM dbo.[', item().table_name, ']'),\n  concat(\n    'SELECT * FROM dbo.[', item().table_name,\n    '] WHERE [', item().watermark_col,\n    '] > ''', activity('act_get_old_watermark').output.firstRow.last_watermark,\n    ''' AND [', item().watermark_col,\n    '] <= ''', activity('act_get_new_watermark').output.firstRow.new_watermark,\n    ''''\n  )\n)",
+													"type": "Expression"
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"logSettings": {
+												"enableCopyActivityLog": true,
+												"copyActivityLogSettings": {
+													"logLevel": "Warning",
+													"enableReliableLogging": false
+												},
+												"logLocationSettings": {
+													"linkedServiceName": {
+														"referenceName": "ls_adls_migration",
+														"type": "LinkedServiceReference"
+													},
+													"path": "migration-raw/adf-logs/"
+												}
+											},
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "ds_sql_source",
+												"type": "DatasetReference",
+												"parameters": {
+													"table_name": {
+														"value": "@item().table_name",
+														"type": "Expression"
+													},
+													"watermark_col": "@item().watermark_col",
+													"old_watermark": {
+														"value": "@activity('act_get_old_watermark').output.firstRow.last_watermark",
+														"type": "Expression"
+													},
+													"new_watermark": {
+														"value": "@activity('act_get_new_watermark').output.firstRow.new_watermark",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "ds_adls_bronze_parquet",
+												"type": "DatasetReference",
+												"parameters": {
+													"table_name": {
+														"value": "@item().sink_folder",
+														"type": "Expression"
+													},
+													"ingestion_date": {
+														"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "act_update_watermark",
+										"type": "SqlServerStoredProcedure",
+										"dependsOn": [
+											{
+												"activity": "act_copy_to_bronze",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"storedProcedureName": "[dbo].[usp_update_watermark]",
+											"storedProcedureParameters": {
+												"new_watermark": {
+													"value": {
+														"value": "@activity('act_get_new_watermark').output.firstRow.new_watermark",
+														"type": "Expression"
+													},
+													"type": "DateTime"
+												},
+												"row_count": {
+													"value": {
+														"value": "@activity('act_copy_to_bronze').output.rowsCopied",
+														"type": "Expression"
+													},
+													"type": "Int64"
+												},
+												"table_name": {
+													"value": {
+														"value": "@item().sink_folder",
+														"type": "Expression"
+													},
+													"type": "String"
+												}
+											}
+										},
+										"linkedServiceName": {
+											"referenceName": "ls_azure_sql_migration",
+											"type": "LinkedServiceReference"
+										}
+									},
+									{
+										"name": "act_log_copy_failure",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "act_copy_to_bronze",
+												"dependencyConditions": [
+													"Failed"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "v_error_message",
+											"value": {
+												"value": "@concat(\n     'Copy failed for table: ',\n     item().table_name,\n     ' | Run ID: ',\n     pipeline().RunId\n   )",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"p_tables_config": {
+				"type": "array",
+				"defaultValue": [
+					{
+						"table_name": "olist_orders_dataset",
+						"watermark_col": "order_purchase_timestamp",
+						"sink_folder": "olist_orders_dataset"
+					},
+					{
+						"table_name": "olist_order_items_dataset",
+						"watermark_col": "shipping_limit_date",
+						"sink_folder": "olist_order_items_dataset"
+					},
+					{
+						"table_name": "vw_order_payments_incremental",
+						"watermark_col": "order_purchase_timestamp",
+						"sink_folder": "olist_order_payments_dataset"
+					},
+					{
+						"table_name": "olist_order_reviews_dataset",
+						"watermark_col": "review_creation_date",
+						"sink_folder": "olist_order_reviews_dataset"
+					},
+					{
+						"table_name": "olist_customers_dataset",
+						"watermark_col": "created_at",
+						"sink_folder": "olist_customers_dataset"
+					},
+					{
+						"table_name": "olist_products_dataset",
+						"watermark_col": "created_at",
+						"sink_folder": "olist_products_dataset"
+					},
+					{
+						"table_name": "olist_sellers_dataset",
+						"watermark_col": "created_at",
+						"sink_folder": "olist_sellers_dataset"
+					},
+					{
+						"table_name": "olist_geolocation_dataset",
+						"watermark_col": "created_at",
+						"sink_folder": "olist_geolocation_dataset"
+					},
+					{
+						"table_name": "product_category_name_translation",
+						"watermark_col": null,
+						"sink_folder": "product_category_name_translation"
+					}
+				]
+			}
+		},
+		"variables": {
+			"v_error_message": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}

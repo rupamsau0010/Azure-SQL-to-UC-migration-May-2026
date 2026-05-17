@@ -16,3 +16,6 @@ GO
 SELECT * FROM dbo.watermark_control
 WHERE table_name = 'olist_order_payments_dataset';
 GO
+
+SELECT * FROM [dbo].[watermark_control];
+GO
